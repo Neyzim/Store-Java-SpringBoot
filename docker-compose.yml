@@ -1,0 +1,73 @@
+version: '3.8'
+services:
+  inventory-service-db:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: inventariodb
+      MYSQL_ROOT_PASSWORD: 1234567890
+    volumes:
+      - inventory_service_db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  inventory_service:
+    build: ./inventory-service
+    depends_on:
+      - "inventory-service-db"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://inventory-service-db:3306/inventariodb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234567890
+    ports:
+      - "8082:8082"
+
+  orders_service_db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: pedidosdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234567890
+    volumes:
+      - orders_service_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  orders_service:
+    build: ./orders-service
+    depends_on:
+      - "orders_service_db"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orders-service-db:5432/pedidosdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234567890
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: postgres
+    ports:
+      - "8081:8081"
+
+  payment_service_db:
+    image: mongo:8
+    environment:
+      MONGO_DB: pagamentosdb
+    volumes:
+      - payment_services_db_data:/data/db
+    ports:
+      - "27017:27017"
+
+  payment_service:
+    build: ./payment-service
+    depends_on:
+      - payment_service_db
+    environment:
+      MONGO_DATASOURCE_URL: mongodb://payment_service_db:27017/pagamentosdb
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+
+
+volumes:
+  inventory_service_db_data:
+  orders_service_db_data:
+  payment_services_db_data:
+
+
