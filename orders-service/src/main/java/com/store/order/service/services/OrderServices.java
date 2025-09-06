@@ -14,6 +14,7 @@ public class OrderServices {
     @Autowired
     private OrderRepository orderRepository;
 
+
     public List<Order> findAll(){
         return orderRepository.findAll();
     }
@@ -21,5 +22,9 @@ public class OrderServices {
     public Order findById(Long id){
         Optional<Order> obj = orderRepository.findById(id);
         return obj.get();
+    }
+
+    public Order save(Order order) {
+        return orderRepository.save(order);
     }
 }

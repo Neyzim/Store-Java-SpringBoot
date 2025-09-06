@@ -22,7 +22,7 @@ services:
       - "8082:8082"
 
   orders_service_db:
-    image: postgres:17
+    image: postgres
     environment:
       POSTGRES_DB: pedidosdb
       POSTGRES_USER: postgres
@@ -31,13 +31,21 @@ services:
       - orders_service_db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   orders_service:
     build: ./orders-service
     depends_on:
-      - "orders_service_db"
+      orders_service_db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://orders-service-db:5432/pedidosdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orders_service_db:5432/pedidosdb
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 1234567890
       SERVER_PORT: 8081
@@ -64,10 +72,43 @@ services:
     ports:
       - "8083:8083"
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.3
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: "kafka:9092"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: "zookeeper:2181"
+    depends_on:
+      - kafka
 
 volumes:
   inventory_service_db_data:
   orders_service_db_data:
   payment_services_db_data:
+  zookeeper:
+  kafka:
+  kafka-ui:
 
 

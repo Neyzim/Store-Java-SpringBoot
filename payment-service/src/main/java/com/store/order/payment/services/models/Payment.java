@@ -17,6 +17,8 @@ public class Payment implements Serializable {
     @Id
     private String payment_id;
 
+    private String OrderId;
+
     private Instant instant;
 
     private Integer paymentStatus;
@@ -24,10 +26,19 @@ public class Payment implements Serializable {
     public Payment() {
     }
 
-    public Payment(String payment_id, Instant instant, PaymentEnum paymentEnum) {
+    public Payment(String payment_id, Instant instant, PaymentEnum paymentEnum, String OrderId) {
         this.payment_id = payment_id;
         this.instant = instant;
+        this.OrderId = OrderId;
         ApplyPaymentStatus(paymentEnum);
+    }
+
+    public String getOrderId() {
+        return OrderId;
+    }
+
+    public void setOrderId(String orderId) {
+        OrderId = orderId;
     }
 
     public String getPayment_id() {
